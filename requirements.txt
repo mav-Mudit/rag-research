@@ -4,3 +4,5 @@ langchain-chroma
 chromadb
 pypdf
 streamlit
+langchain-openai 
+python-dotenv
