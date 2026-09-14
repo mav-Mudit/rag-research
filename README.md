@@ -35,7 +35,7 @@ Research Papers (PDF)
         ↓
     ChromaDB
         ↓
-    Similarity Search
+  Similarity Search
         ↓
  Retrieved Documents
         ↓
@@ -100,6 +100,69 @@ uv run streamlit run app.py
 
 **V1 — Basic RAG**
 
-The current version implements a straightforward retrieval augmented generation pipeline using a single vector store and similarity based retrieval.
+The current version implements a straightforward retrieval-augmented generation pipeline using a single vector store and similarity-based retrieval.
 
-Future versions will explore more advanced retrieval and RAG techniques.
+### V1 Baseline
+
+The V1 baseline uses the following configuration:
+
+| Component        | Configuration                  |
+| ---------------- | ------------------------------ |
+| Papers           | 7                              |
+| Pages            | 279                            |
+| Chunks           | 1,167                          |
+| Chunking         | RecursiveCharacterTextSplitter |
+| Chunk size       | 1,000                          |
+| Chunk overlap    | 150                            |
+| Embedding model  | `text-embedding-3-small`       |
+| Vector store     | ChromaDB                       |
+| Retrieval        | Similarity search              |
+| Top-k            | 3                              |
+| Generation model | `gpt-5-mini`                   |
+| Temperature      | 0                              |
+
+### Baseline Questions
+
+The following fixed questions will be used to evaluate the V1 baseline and all subsequent Advanced RAG experiments.
+
+**1.** What problem does Retrieval-Augmented Generation aim to address, and why can a language model's parametric knowledge be insufficient?
+
+**2.** How does RAG combine parametric and non-parametric memory during generation?
+
+**3.** How does RAG differ from a traditional language model that relies only on its parameters, particularly when dealing with knowledge-intensive tasks?
+
+**4.** What are the main differences between RAG-Sequence and RAG-Token, and how do they affect the documents used during generation?
+
+**5.** How does GPT-3 demonstrate that large language models can perform tasks from natural-language descriptions and a few examples without gradient-based updates?
+
+**6.** How does T5's text-to-text formulation allow the same model and training framework to be applied to different NLP tasks?
+
+**7.** Why does LoRA argue that the changes required when adapting a large language model have low intrinsic rank, and how does its approach exploit this observation?
+
+**8.** How does ReAct combine reasoning and acting, and why does this provide an advantage over approaches that perform reasoning without interacting with external environments?
+
+**9.** What does Chain-of-Thought prompting reveal about the relationship between model scale, intermediate reasoning steps, and performance on complex reasoning tasks?
+
+**10.** What limitations of RAG are identified by the authors, and how do these limitations affect the reliability or usefulness of the generated answers?
+
+These questions will remain unchanged throughout the V2 experiments so that different retrieval approaches can be compared against the same baseline.
+
+
+
+## Roadmap
+
+### V2 — Advanced RAG
+
+The goal of V2 is to improve retrieval step by step and evaluate whether each technique actually improves performance.
+
+Planned experiments:
+
+1. Chunking
+2. Metadata-aware retrieval
+3. BM25
+4. Hybrid search
+5. Reciprocal Rank Fusion (RRF)
+6. Reranking
+7. Query transformation
+8. Final V2 pipeline
+9. V1 vs V2 comparison

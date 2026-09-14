@@ -8,7 +8,25 @@ PAPERS_DIR = Path("data/papers")
 PAPER_METADATA = {
     "rag.pdf": {
         "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
-    }
+    },
+    "bert.pdf": {
+        "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+    },
+    "gpt-3.pdf": {
+        "title": "Language Models are Few-Shot Learners"
+    },
+    "T5.pdf": {
+        "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer"
+    },
+    "LoRA.pdf": {
+        "title": "LoRA: Low-Rank Adaptation of Large Language Models"
+    },
+    "ReAct.pdf": {
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models"
+    },
+    "cot.pdf": {
+        "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+    },
 }
 
 
