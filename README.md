@@ -166,3 +166,28 @@ Planned experiments:
 7. Query transformation
 8. Final V2 pipeline
 9. V1 vs V2 comparison
+
+## V2 Stage 1 — Chunking Experiment
+
+The first V2 experiment evaluated whether changing chunk size and overlap could improve retrieval quality.
+
+Four configurations were compared using the same fixed set of 10 evaluation questions:
+
+| Configuration | Chunk Size | Overlap |
+|---|---:|---:|
+| V1 baseline | 1000 | 150 |
+| C1 | 500 | 100 |
+| C2 | 750 | 100 |
+| C3 | 1500 | 200 |
+
+The configurations were evaluated by inspecting the retrieved passages for all 10 questions, with particular attention to the retrieval weaknesses identified in the V1 baseline (Q2, Q3, and Q10).
+
+### Result
+
+**C3 (1500/200) was selected as the winner.**
+
+The 1500/200 configuration produced the strongest overall retrieval quality across the evaluation set. In particular, it improved retrieval for Q3 and Q10, while maintaining strong performance on the remaining questions.
+
+The most significant improvement was observed for Q10, where C3 retrieved passages directly discussing RAG's dependence on relevant evidence, limitations in corpus coverage, and residual hallucination.
+
+The selected configuration will be used as the fixed chunking configuration for the next V2 experiments.

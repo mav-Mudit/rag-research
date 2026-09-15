@@ -3,10 +3,14 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from ingest import load_all_papers
 
 
+CHUNK_SIZE = 1500
+CHUNK_OVERLAP = 200
+
+
 def split_documents(documents):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=150,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
     )
 
     chunks = splitter.split_documents(documents)
@@ -24,5 +28,6 @@ if __name__ == "__main__":
     for i, chunk in enumerate(chunks[:5]):
         print(f"\n--- CHUNK {i + 1} ---")
         print(chunk.page_content)
+
         print("\n--- METADATA ---")
         print(chunk.metadata)
