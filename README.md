@@ -147,6 +147,41 @@ The following fixed questions will be used to evaluate the V1 baseline and all s
 
 These questions will remain unchanged throughout the V2 experiments so that different retrieval approaches can be compared against the same baseline.
 
+### V1 Evaluation Summary
+
+The V1 baseline was evaluated using the 10 fixed questions defined above.
+
+Overall, the baseline RAG system performed well, with strong retrieval and well-grounded answers for most questions.
+
+#### Strong Retrieval
+
+The following questions produced particularly strong retrieval results:
+
+* **Q1 — RAG motivation and limitations of parametric knowledge:** Retrieved passages directly explaining the motivation behind RAG and the limitations of relying only on parametric knowledge.
+* **Q4 — RAG-Sequence vs. RAG-Token:** Retrieved the relevant passages directly describing the two approaches and their differences.
+* **Q5 — GPT-3 few-shot learning:** Retrieved highly relevant passages describing GPT-3's few-shot capabilities and in-context learning.
+* **Q6 — T5 text-to-text formulation:** Retrieved passages directly explaining the unified text-to-text framework.
+* **Q7 — LoRA:** Retrieved relevant passages explaining the low-rank adaptation assumption and how LoRA exploits it.
+* **Q8 — ReAct:** Retrieved passages directly describing the combination of reasoning and acting.
+* **Q9 — Chain-of-Thought prompting:** Retrieved relevant passages discussing model scale, reasoning steps, and performance.
+
+#### Areas for Improvement
+
+Some questions exposed weaknesses in the baseline retrieval:
+
+* **Q2 — Parametric and non-parametric memory:** The answer was good, but one of the retrieved sources was less directly relevant to the specific question.
+* **Q3 — RAG vs. traditional language models:** The retrieved passages were relevant but somewhat redundant and did not provide the most focused evidence for the comparison.
+* **Q10 — Limitations of RAG:** This was the clearest retrieval weakness. The question asks specifically about limitations, but the retrieved passages focused more on RAG results and performance rather than directly discussing its limitations. The generated answer therefore relied partly on inference from the retrieved context.
+
+#### Key Takeaway
+
+The V1 baseline demonstrates that the basic RAG pipeline can retrieve relevant information from the research-paper collection. However, **Q2, Q3, and especially Q10** show that retrieval quality can still be improved.
+
+An important observation is that a good generated answer does not necessarily mean that retrieval was good. The language model can sometimes fill gaps using its own parametric knowledge.
+
+Therefore, V2 will focus on improving the retrieval component while keeping the **same 10 evaluation questions** and comparing every experiment against this fixed V1 baseline.
+
+Each retrieval technique will be tested independently, and only techniques that demonstrate an improvement will be considered for the final V2 pipeline.
 
 
 ## Roadmap
