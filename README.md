@@ -226,3 +226,32 @@ The 1500/200 configuration produced the strongest overall retrieval quality acro
 The most significant improvement was observed for Q10, where C3 retrieved passages directly discussing RAG's dependence on relevant evidence, limitations in corpus coverage, and residual hallucination.
 
 The selected configuration will be used as the fixed chunking configuration for the next V2 experiments.
+
+## V2 Stage 2 — Metadata-Aware Retrieval
+
+The second V2 experiment evaluated whether document metadata could improve retrieval quality.
+
+The C3 configuration (1500 chunk size / 200 overlap) was used as the fixed baseline for this stage.
+
+Two metadata-aware retrieval strategies were tested:
+
+| Configuration | Approach |
+|---|---|
+| M1 | Hard metadata filtering |
+| M2 | Metadata-based score boosting |
+
+### M1 — Hard Metadata Filtering
+
+If a query explicitly mentioned a known paper, retrieval was restricted to chunks from that paper. Otherwise, normal semantic retrieval was used.
+
+This improved paper-level precision by ensuring that queries mentioning a specific paper retrieved only chunks from that paper. However, restricting retrieval to the correct paper did not consistently improve the relevance of the retrieved passages.
+
+### M2 — Metadata Score Boosting
+
+M2 retrieved candidates using semantic similarity and applied a small ranking boost to chunks belonging to the paper explicitly mentioned in the query.
+
+This approach was less restrictive than M1, but it also did not produce a consistent improvement over the C3 baseline.
+
+### Result
+
+Neither metadata-aware retrieval strategy produced a meaningful improvement over C3 across the fixed set of 10 evaluation questions.
