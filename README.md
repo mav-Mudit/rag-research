@@ -255,3 +255,26 @@ This approach was less restrictive than M1, but it also did not produce a consis
 ### Result
 
 Neither metadata-aware retrieval strategy produced a meaningful improvement over C3 across the fixed set of 10 evaluation questions.
+
+
+## V2 Stage 3 — BM25 Retrieval
+
+The third V2 experiment evaluated BM25 as a standalone lexical retrieval method.
+
+The C3 configuration (1500 chunk size / 200 overlap) was kept fixed so that the retrieval method could be evaluated independently.
+
+### BM25
+
+BM25 ranks chunks based on lexical overlap between the query and document text. Unlike semantic retrieval, it does not use embeddings and therefore provides a different retrieval signal.
+
+BM25 performed particularly well for terminology-heavy questions where important terms appeared explicitly in the relevant passages, such as LoRA, ReAct, and Chain-of-Thought.
+
+However, BM25 also produced irrelevant results for some questions. The clearest example was Q10, where none of the top three retrieved passages came from the RAG paper, despite the question explicitly asking about RAG limitations.
+
+### Result
+
+BM25 was not selected as a standalone replacement for the C3 semantic retriever.
+
+However, the experiment demonstrated that BM25 can provide a complementary lexical retrieval signal. Therefore, BM25 will be evaluated together with C3 in the next stage using **Hybrid Search**.
+
+The BM25 implementation and evaluation results are retained for reproducibility.

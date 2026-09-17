@@ -1,6 +1,10 @@
+from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv
+from rank_bm25 import BM25Okapi
+
+from src.chunk import split_documents
+from src.ingest import load_all_papers
 
 
 load_dotenv()
@@ -92,10 +96,55 @@ def retrieve_documents(query, k=3):
 
 #     return [document for document, score in results[:k]]
 
-if __name__ == "__main__":
-    query = "According to the LoRA paper, how does LoRA exploit the low-rank assumption?"
 
-    documents = retrieve_documents(query)
+# BM25 — Lexical Retrieval
+def load_bm25():
+    documents = load_all_papers()
+    chunks = split_documents(documents)
+
+    tokenized_chunks = [
+        chunk.page_content.lower().split()
+        for chunk in chunks
+    ]
+
+    # This creates a BM25 search object.
+    bm25 = BM25Okapi(tokenized_chunks)
+
+    return bm25, chunks
+
+
+def retrieve_documents_bm25(query, k=3):
+    bm25, chunks = load_bm25()
+
+    # Convert query into words
+    tokenized_query = query.lower().split()
+
+    # Get BM25 score for every chunk
+    scores = bm25.get_scores(tokenized_query)
+
+    # Get chunk indices sorted by score
+    ranked_indices = sorted(
+        range(len(scores)),
+        key=lambda index: scores[index],
+        reverse=True
+    )
+
+    # Take the top k chunks
+    top_indices = ranked_indices[:k]
+
+    # Get the actual chunks
+    documents = []
+
+    for index in top_indices:
+        documents.append(chunks[index])
+
+    return documents
+
+
+if __name__ == "__main__":
+    query = "What are the limitations of Retrieval-Augmented Generation?"
+
+    documents = retrieve_documents_bm25(query, k=3)
 
     for i, document in enumerate(documents, start=1):
         print(f"\n{'=' * 60}")

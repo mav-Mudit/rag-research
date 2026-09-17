@@ -1,6 +1,6 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from ingest import load_all_papers
+from src.ingest import load_all_papers
 
 
 CHUNK_SIZE = 1500
