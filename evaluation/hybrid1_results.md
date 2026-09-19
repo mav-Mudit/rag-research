@@ -1,4 +1,4 @@
-# M2 metadata boost Evaluation Results
+# Hybrid V1 Evaluation Results
 
 
 
@@ -76,7 +76,9 @@ inspected and interpreted. REALM [ 20] and ORQA [ 31], two recently introduced m
 
 ### Generated Answer
 
-Retrieval-Augmented Generation (RAG) addresses the limitations of large pre-trained language models on knowledge-intensive tasks by combining parametric memory (the model’s weights) with a non‑parametric, retrievable memory (e.g., a Wikipedia index) so generated outputs can condition on explicit, up-to-date documents [Source 1], [Source 2]. A language model’s parametric knowledge is often insufficient because factual knowledge is stored implicitly in its parameters, which makes it hard to access precisely, hard to update or revise, and unable to provide provenance for its outputs; such models can also “hallucinate” facts and therefore underperform on tasks that require reliable, inspectable external knowledge [Source 1], [Source 3].
+Retrieval-Augmented Generation (RAG) targets knowledge‑intensive NLP tasks where a model needs reliable, up‑to‑date, and inspectable factual information. It does this by giving a pre‑trained seq2seq model differentiable access to an external (non‑parametric) text index that it can retrieve from and condition on when generating output [Source 1], [Source 2].
+
+A language model’s parametric knowledge can be insufficient because stored facts in model parameters are hard to precisely access or manipulate, are difficult to update or revise, and do not provide provenance for decisions; such limitations can lead to poorer performance on knowledge‑heavy tasks and to hallucinations. Using an external retriever+index lets the model consult explicit evidence, be updated as the world changes, and produce more factual, specific outputs [Source 1], [Source 3], [Source 2].
 
 ---
 
@@ -148,7 +150,7 @@ leverage two components: (i) a retriever pη(z|x) with parametersη that returns
 
 ### Generated Answer
 
-RAG mixes a parametric seq2seq generator (BART) with a non‑parametric dense document index (retriever/DPR). At generation time the retriever pη(z|x) returns top‑K documents z conditioned on the input x; the seq2seq generator then conditions on those retrieved documents together with x to produce the output y. The model treats the retrieved documents as latent variables and marginalizes over them with a top‑K approximation (either assuming one document explains all tokens or allowing different documents per token). Both retriever and generator can be fine‑tuned end‑to‑end, and the external (non‑parametric) index can be swapped to update knowledge without retraining the generator [Source 2][Source 1][Source 3].
+RAG uses a pre-trained seq2seq transformer as the parametric memory (BART) and a dense-vector Wikipedia index with a neural retriever (DPR) as the non-parametric memory. The retriever pη(z|x) returns top-K latent documents given the input, and the seq2seq generator conditions on those retrieved documents plus the input to produce the output. RAG marginalizes over the latent documents with a top-K approximation (either per-output or per-token), and the retriever and generator can be fine-tuned end-to-end so the components are jointly learned. [Source 2], [Source 1], [Source 3]
 
 ---
 
@@ -209,15 +211,16 @@ can be easily updated at test time. Parametric-only models like T5 or BART need 
 
 ### Generated Answer
 
-Short answer: RAG augments a parametric language model with a non‑parametric, retrieval-based memory, so it retrieves and conditions on external passages at generation time rather than relying only on knowledge stored in model weights. This gives several practical differences for knowledge‑intensive tasks:
+Short answer: RAG augments a parametric language model with a retrieval-based (non‑parametric) memory, so it fetches and conditions on external passages at generation time rather than relying solely on knowledge stored in its weights. This makes it more updatable, interpretable, and less prone to some failure modes of parametric‑only models, and improves performance on knowledge‑intensive tasks [Source 1][Source 3].
 
-- External, inspectable memory: RAG queries a vector index (e.g., Wikipedia via a neural retriever) at inference time, so the exact retrieved passages can be inspected and interpreted — unlike hidden parametric knowledge in model weights [Source 1].  
-- Updatable knowledge without re‑training: Because knowledge lives in the retrievable index, it can be revised or swapped at test time (index “hot‑swapping”), whereas parametric models need further training to change their stored knowledge [Source 1, Source 3].  
-- Less prone to hallucination and more factual outputs: RAG’s retrieval grounding reduces hallucinations and produces more factual, specific, and diverse generations compared to a parametric‑only seq2seq baseline (e.g., BART/T5) on knowledge‑intensive NLG and QA tasks [Source 1, Source 3].  
-- Better performance on open‑domain QA and other knowledge tasks: Learning to retrieve (differentiable retrieval) improves results and is especially crucial for open‑domain QA; frozen or non‑learned retrievers perform worse in many cases [Source 3].  
-- Flexibility in conditioning: RAG can be formulated to condition on the same retrieved passages for the whole generation or to use different passages per token, enabling different tradeoffs in generation behavior [Source 1].
+Key differences (from the provided context)
+- Retrieval + generation: RAG combines a parametric generator with a retriever that fetches relevant passages and conditions generation on them (including formulations that can use the same passage for the whole sequence or different passages per token) — enabling free‑form, abstractive answers grounded in retrieved evidence [Source 1][Source 2].
+- More factual, specific, diverse outputs: RAG produces more factual, specific and diverse language than a state‑of‑the‑art parametric seq2seq baseline (e.g., BART) on knowledge‑intensive generation tasks [Source 1][Source 3].
+- Learnable and crucial retrieval: Learning the retriever (differentiable retrieval) improves results across tasks and is especially important for open‑domain QA, compared to fixed retrieval or relying only on model parameters [Source 3].
+- Updatability and interpretability: Because RAG uses non‑parametric memory, its knowledge can be revised or expanded at test time (index “hot‑swapping”), and retrieved evidence can be inspected to provide insight into predictions — things parametric‑only models cannot easily do without further training [Source 1][Source 3].
+- Reduced hallucination risk: By grounding generation in retrieved passages, RAG helps address hallucinations and the inability of parametric models to easily revise or explain their knowledge [Source 1].
 
-If you want, I can summarize empirical gains reported for specific tasks (e.g., MSMARCO or open‑domain QA) from the paper.
+If you want, I can summarize how the retriever vs. BM25 ablation affects different tasks or give examples from the MSMARCO or Jeopardy evaluations mentioned in the sources.
 
 ---
 
@@ -305,16 +308,17 @@ can be easily updated at test time. Parametric-only models like T5 or BART need 
 
 ### Generated Answer
 
-- Mechanism:
-  - RAG-Sequence conditions the entire generated sequence on a single retrieved document (the retrieved document is treated as one latent variable and marginalized over the top-K retrieved documents) [Source 1].
-  - RAG-Token marginalizes a latent document at each token step: for each next token the generator computes a distribution conditioned on each retrieved document and then marginalizes, so different tokens can be generated conditioned on different documents [Source 2].
+- Basic difference in latent-variable marginalization:
+  - RAG-Sequence treats the retrieved document as a single latent variable for the whole output sequence: the model marginalizes over the top-K retrieved documents, but for any given document z it uses that same z to generate every token in y [Source 1].
+  - RAG-Token marginalizes at the token level: for each next token the generator produces token distributions conditioned on each retrieved document and then marginalizes, so it can effectively draw a (potentially) different document for each token [Source 2].
 
-- Effect on which documents are used:
-  - RAG-Sequence effectively picks (softly, via marginalization over top-K) one document to explain the whole output sequence — the same document is used to generate every token of the sequence [Source 1].
-  - RAG-Token can draw a different document for different target tokens, allowing the model to pull content from several documents within a single generated answer [Source 2].
+- How this affects which documents are used during generation:
+  - RAG-Sequence picks (via marginalization over top-K) one document per generated sequence and generates the entire sequence from that single document’s context [Source 1].
+  - RAG-Token can combine information across multiple documents within a single generated sequence because each token’s probability is computed by marginalizing over the top-K documents independently; thus different tokens can be influenced by different documents [Source 2].
 
-- Practical consequence noted in the paper:
-  - RAG-Sequence tends to produce more diverse generations than RAG-Token (both are more diverse than BART) [Source 3].
+- Additional consequences:
+  - For sequence-classification tasks with target length one, the two approaches are equivalent (only one token) [Source 2].
+  - Empirically, RAG-Sequence produced more diverse generations than RAG-Token in the reported experiments [Source 3].
 
 ---
 
@@ -383,7 +387,7 @@ performance than humans on standard benchmarks, and it retains the biases of the
 
 ### Generated Answer
 
-GPT-3 (an autoregressive language model with 175 billion parameters) is evaluated in the zero‑, one‑, and few‑shot settings by giving it natural‑language instructions and a small number of examples in the input prompt and then sampling its outputs—crucially, with no gradient updates or fine‑tuning. This in‑context, few‑shot application lets the single large model perform many new tasks from just instructions plus examples, sometimes approaching prior fine‑tuned state‑of‑the‑art performance [Source 1][Source 2].
+GPT-3 (an autoregressive language model with 175 billion parameters) was trained once and then evaluated by conditioning it on natural‑language task descriptions plus a few demonstration examples in its context window (zero‑, one‑, and few‑shot settings). Without any gradient updates or fine‑tuning, this in‑context approach yielded strong performance on many NLP tasks—sometimes nearly matching prior state‑of‑the‑art fine‑tuned methods—demonstrating that large LMs can learn to perform new tasks from descriptions and examples alone [Source 1], [Source 2].
 
 ---
 
@@ -470,7 +474,7 @@ on a wide variety of English-based NLP problems, including question answering, d
 
 ### Generated Answer
 
-T5 casts every NLP problem as a text-in → text-out task (e.g., "translate English to German: ...", "summarize: ...", or "cola sentence: ..."), so inputs and targets for all tasks are plain text strings [Source 3][Source 2]. Because every task is expressed in the same format, the authors can use a single Transformer-based model, the same loss/objective, the same training procedure, hyperparameters, and the same decoding process across tasks — i.e., train the model to generate the appropriate target text for each input text [Source 3][Source 2]. This unified text-to-text framing therefore lets one model and one training framework be applied directly to diverse tasks (translation, QA, classification, summarization, etc.) without changing the core architecture or training setup [Source 2][Source 3].
+T5 casts every problem as text input → text output (e.g., "translate English to German: …", "summarize: …", "cola sentence: …") so the same sequence-to-sequence Transformer can be used for all tasks [Source 2]. Because inputs and targets are all plain text, the authors can use a single model architecture, loss function, training procedure, decoding process, and hyperparameter set across diverse tasks (translation, QA, classification, summarization, etc.), which makes the model and training framework directly applicable and comparable across those tasks [Source 2][Source 3]. The models studied are all based on the Transformer architecture and implemented within this unified text‑to‑text setup (T5) [Source 1].
 
 ---
 
@@ -542,14 +546,13 @@ the entire model (similar to LoRA withr =dmodel) could certainly outperform LoRA
 
 ### Generated Answer
 
-Why they argue updates are low-rank
-- Prior work shows over-parameterized pretrained models lie on a low intrinsic dimension, so Hu et al. hypothesize that the weight changes needed for adaptation also live in a low “intrinsic rank” subspace rather than requiring full-rank updates [Source 2].  
-- Empirical evidence supports this: for GPT-3 175B very small ranks (r = 1 or 2) suffice even though the full weight dimensionality is huge, and experiments (Table 6) show competitive performance with small r and that larger r does not discover substantially new subspaces [Source 2, Source 3].
+Why LoRA thinks adaptation updates are low‑rank
+- Prior work shows over‑parameterized pretrained models lie on a low intrinsic dimension, so LoRA hypothesizes that the weight changes during adaptation similarly live in a low “intrinsic rank” subspace rather than filling the full parameter space [Source 2].  
+- Empirically, LoRA finds very small ranks suffice (e.g., r = 1 or 2 even when the full dimension is 12,288 for GPT‑3), and experiments (Table 6) show small r performs competitively; tests of subspace overlap indicate that increasing r does not meaningfully expand the learned subspace, supporting the low‑rank hypothesis [Source 3].
 
 How LoRA exploits that observation
-- Instead of fine-tuning all weights, LoRA freezes the pretrained weights and models the adaptation as a low-rank additive update: it injects trainable low-rank decomposition matrices (A and B) into each Transformer layer and optimizes those small matrices during adaptation [Source 1, Source 2].  
-- This lets LoRA massively reduce the number of trainable parameters and memory (e.g., up to ~10,000× fewer trainable parameters and ~3× less GPU memory in the GPT-3 example) while matching or exceeding fine-tuning quality; it also enables cheap task switching by swapping small LoRA modules and avoids extra inference latency [Source 1, Source 2].  
-- (Caveat noted by the authors: a very small rank may not suffice for every downstream task—e.g., tasks far from pretraining data might need larger or full-rank updates) [Source 3].
+- Instead of fine‑tuning all weights, LoRA freezes the pretrained weights and models the weight update ∆W as a low‑rank decomposition (trainable matrices A and B) injected into each Transformer layer. Only those small rank‑decomposition matrices are trained [Source 2].  
+- This lets LoRA dramatically reduce the number of trainable parameters and GPU memory (e.g., ~10,000× fewer trainable parameters and ~3× less GPU memory in the GPT‑3 example) while matching or improving fine‑tuning quality, avoiding added inference latency, and enabling cheap task‑specific modules that can be swapped in/out [Source 1, Source 2].
 
 ---
 
@@ -610,14 +613,13 @@ stept, an agent receives an observationot∈O from the environment and takes an 
 
 ### Generated Answer
 
-How ReAct combines reasoning and acting
-- ReAct prompts an LLM to produce verbal reasoning traces and to take environment actions in an interleaved manner (reasoning and actions alternate), enabling the model to create, maintain, and adjust high‑level plans while it acts (reason → act) and to use observations from actions to inform subsequent reasoning (act → reason) [Source 1].
+How it combines them
+- ReAct prompts a language model to produce verbal reasoning traces and environment-directed actions in an interleaved (step-by-step) fashion. This lets the model “reason to act” (use its chain-of-thought to form and adjust high‑level plans) and “act to reason” (query or interact with external sources and bring that new information back into the reasoning trace) [Source 1].
 
-Why this provides an advantage over reasoning-only approaches
-- The interleaved cycle lets the model perform dynamic planning and incorporate fresh external information into its internal reasoning, rather than relying only on internal knowledge [Source 1].  
-- Compared to an Inner‑Monologue–style approach that focuses mainly on external observations, ReAct’s flexible, sparse reasoning traces support diverse reasoning types (e.g., high‑level goal decomposition and commonsense inferences) that IM‑style prompting often lacks [Source 2].  
-- Empirically, an ablation replacing ReAct’s reasoning style with IM‑like dense feedback (ReAct‑IM) reduced overall success (71% vs. 53%), with failures tied to poor subgoal identification and lack of commonsense about where items are in the environment—shortcomings addressed by ReAct’s combined reasoning+acting paradigm [Source 2].  
-- ReAct also improves diagnosability: humans can distinguish internal reasoning from external evidence and inspect the traces to understand why actions were taken, which is harder when reasoning is isolated from action and environment feedback [Source 3].
+Why this helps compared with reasoning-only approaches
+- Interleaving actions with reasoning lets the agent incorporate fresh, environment-derived information into its reasoning (act → reason) and use reasoning to plan better actions (reason → act), which improves dynamic planning and commonsense localization of items that pure internal reasoning can miss [Source 1], [Source 2].
+- Empirically, ReAct outperforms an Inner‑Monologue–style baseline that relies mainly on external observations without flexible internal reasoning (71% vs. 53% overall success), and the paper attributes failures of the IM‑style approach to poor subgoal decomposition and lack of commonsense—shortcomings ReAct addresses by combining reasoning and acting [Source 2].
+- The interleaved traces also improve diagnosability: humans can distinguish internal knowledge from external evidence and inspect the chain‑of‑thought behind actions, which aids understanding and debugging compared to opaque reasoning-only outputs [Source 3].
 
 ---
 
@@ -679,13 +681,7 @@ further work on language-based approaches to reasoning.
 
 ### Generated Answer
 
-- Chain-of-thought prompting is an emergent property of model scale: sufficiently large models begin to produce useful intermediate reasoning steps when prompted, whereas smaller models often do not benefit (and for many models under ~10B parameters chain-of-thought can hurt performance) [Source 1], [Source 2].
-
-- Those intermediate steps materially improve performance on complex reasoning tasks. Compared to standard prompting (which often shows a flat scaling curve), chain-of-thought prompting yields dramatically steeper scaling curves and enables large models to succeed on arithmetic, symbolic, and commonsense reasoning tasks that they otherwise could not [Source 1], [Source 3].
-
-- Increasing model scale reduces multiple kinds of chain-of-thought errors (semantic misunderstandings, missing single reasoning steps, and other errors such as hallucinations or symbol-mapping mistakes); for example, scaling PaLM to 540B fixed a substantial portion of such errors in an error analysis [Source 2].
-
-- Practical implications and limits: chain-of-thought can be elicited from off‑the‑shelf models via prompting without finetuning, expanding the range of tasks models can solve, but producing human‑like chains of thought does not by itself prove that the model is genuinely “reasoning” in a cognitive sense [Source 1], [Source 3].
+Chain-of-Thought (CoT) prompting causes models to produce explicit intermediate reasoning steps in their outputs, rather than just final answers, by augmenting outputs with a “chain of thought” (i.e., step‑by‑step verbal reasoning) [Source 3]. This ability is an emergent property of model scale: CoT prompting reliably helps only at sufficiently large model sizes and often hurts performance for many models smaller than ~10B parameters; success cannot be predicted from small‑model behavior alone [Source 2]. When CoT emerges, it dramatically changes scaling behavior—tasks with flat scaling under standard prompting show sharply improving performance with CoT as model size increases—expanding the set of complex reasoning problems models can solve and enabling benefits such as out‑of‑distribution generalization (e.g., to longer symbolic sequences) [Source 1, Source 3]. Error analyses further indicate that increasing scale fixes many types of mistakes that block correct chains of thought (semantic misunderstandings, missing intermediate steps, and other errors), explaining why larger models benefit more from CoT prompting [Source 2]. Finally, while CoT elicits human‑like intermediate steps and improves task performance, the papers note this does not by itself prove that the models are “reasoning” in the same sense humans do [Source 1].
 
 ---
 
@@ -737,14 +733,15 @@ a correct answer being generated, which is not possible with standard extractive
 
 ### Generated Answer
 
-The authors identify retrieval- and knowledge-coverage–related limits that constrain RAG’s reliability:
+Limitations identified in the provided excerpts
 
-- Dependence on relevant passages: the models’ good performance often assumes access to “gold” passages with the needed facts; many questions are unanswerable without those passages, so if retrieval fails to surface the right documents the generator cannot produce a correct answer [Source 1].  
-- Limited source coverage: not all questions can be answered from a single knowledge source (e.g., Wikipedia), so RAG’s usefulness is reduced when the required information is absent from the retrieval corpus [Source 1].  
-- Imperfect factuality: although RAG hallucinates less and is more factual than BART overall, it is not perfectly reliable — human evaluation shows RAG was judged more factual than BART in 42.7% of cases, BART was more factual in 7.1%, and both were factual in 17% — leaving a substantial fraction of cases where factuality was not established [Source 1].  
-- Dependence on retriever quality/training: RAG’s end-to-end behavior depends on the retrieval component (the retriever is initialized from DPR and uses retrieval supervision), so shortcomings in retrieval supervision or retriever performance will directly reduce answer accuracy and usefulness [Source 3].
+- Dependence on gold (relevant) passages: the authors note that the evaluated models “access gold passages with specific information required to generate the reference answer” and that “many questions are unanswerable without the gold passages” [Source 1]. Effect: if the retriever does not return the necessary passages, RAG cannot produce the correct answer and performance will drop — i.e., reliability depends on retrieving the right evidence.
 
-Together these limitations mean RAG’s outputs are only as reliable as the retrieval stage and the coverage of the underlying corpus: missing or irrelevant documents and remaining generation errors can lead to incorrect or unanswerable outputs.
+- Limited source-coverage (Wikipedia-only issues): the authors state that “not all questions are answerable from Wikipedia alone” [Source 1]. Effect: when the knowledge needed is absent from the retrieval corpus, RAG’s outputs may be incomplete or incorrect, reducing usefulness on topics outside the corpus.
+
+- Remaining tendency to hallucinate (though less than some baselines): the authors report that RAG “hallucinate[s] less and generate[s] factually correct text more often than BART” — wording implies hallucination is reduced but not eliminated [Source 1]. Effect: generated answers can still be factually wrong in some cases, so outputs must be treated with caution and (when important) verified against sources.
+
+If you want, I can summarize how these limitations suggest practical safeguards (e.g., improving retrieval, expanding corpora, or adding verification steps).
 
 ---
 

@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.generate import rag_chain
-from src.retrieve import retrieve_documents_bm25 as retrieve_documents
+from src.retrieve import retrieve_documents_hybrid as retrieve_documents
 
 
 QUESTIONS = [
