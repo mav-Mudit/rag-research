@@ -22,6 +22,13 @@ PAPER_KEYWORDS = {
     "chain-of-thought": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
 }
 
+def document_key(document):
+    return (
+        document.metadata.get("source"),
+        document.metadata.get("page"),
+        document.page_content,
+    )
+
 def load_vector_store():
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small"
@@ -139,7 +146,117 @@ def retrieve_documents_bm25(query, k=3):
         documents.append(chunks[index])
 
     return documents
+def retrieve_documents_hybrid(query, k=3):
+    vector_store = load_vector_store()
 
+    # Semantic retrieval
+    semantic_results = vector_store.similarity_search_with_score(
+        query,
+        k=10,
+    )
+
+    # BM25 retrieval
+    bm25, chunks = load_bm25()
+
+    tokenized_query = query.lower().split()
+
+    bm25_scores = bm25.get_scores(tokenized_query)
+
+    ranked_indices = sorted(
+        range(len(bm25_scores)),
+        key=lambda index: bm25_scores[index],
+        reverse=True,
+    )
+
+    bm25_indices = ranked_indices[:10]
+
+    # Normalize semantic distances
+    semantic_scores = [
+        (document, score)
+        for document, score in semantic_results
+    ]
+
+    semantic_values = [
+        score
+        for document, score in semantic_scores
+    ]
+
+    semantic_min = min(semantic_values)
+    semantic_max = max(semantic_values)
+
+    if semantic_max == semantic_min:
+        normalized_semantic = {
+            document_key(document): 1.0
+            for document, score in semantic_scores
+        }
+    else:
+        normalized_semantic = {
+            document_key(document): 1 - (
+                (score - semantic_min)
+                / (semantic_max - semantic_min)
+            )
+            for document, score in semantic_scores
+        }
+
+    # Normalize BM25 scores
+    selected_bm25_scores = [
+        bm25_scores[index]
+        for index in bm25_indices
+    ]
+
+    bm25_min = min(selected_bm25_scores)
+    bm25_max = max(selected_bm25_scores)
+
+    if bm25_max == bm25_min:
+        normalized_bm25 = {
+            document_key(chunks[index]): 1.0
+            for index in bm25_indices
+        }
+    else:
+        normalized_bm25 = {
+            document_key(chunks[index]): (
+                (bm25_scores[index] - bm25_min)
+                / (bm25_max - bm25_min)
+            )
+            for index in bm25_indices
+        }
+
+    # Combine semantic and BM25 scores
+    combined_scores = {}
+    documents = {}
+
+    for document, score in semantic_scores:
+        document_id = document_key(document)
+
+        combined_scores[document_id] = (
+            0.5 * normalized_semantic[document_id]
+        )
+
+        documents[document_id] = document
+
+    for index in bm25_indices:
+        document = chunks[index]
+        document_id = document_key(document)
+
+        bm25_score = normalized_bm25[document_id]
+
+        combined_scores[document_id] = (
+            combined_scores.get(document_id, 0)
+            + 0.5 * bm25_score
+        )
+
+        documents[document_id] = document
+
+    ranked_documents = sorted(
+        combined_scores.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+
+    return [
+        documents[document_id]
+        for document_id, score in ranked_documents[:k]
+    ]
 
 if __name__ == "__main__":
     query = "What are the limitations of Retrieval-Augmented Generation?"

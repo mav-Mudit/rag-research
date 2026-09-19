@@ -278,3 +278,64 @@ BM25 was not selected as a standalone replacement for the C3 semantic retriever.
 However, the experiment demonstrated that BM25 can provide a complementary lexical retrieval signal. Therefore, BM25 will be evaluated together with C3 in the next stage using **Hybrid Search**.
 
 The BM25 implementation and evaluation results are retained for reproducibility.
+
+## V2 Stage 3 — Hybrid Search
+
+The third V2 experiment evaluated whether combining semantic retrieval with lexical BM25 retrieval could improve retrieval quality.
+
+The **C3 configuration (1500 chunk size / 200 overlap)** was used as the fixed semantic retrieval baseline. **BM25 standalone** was also considered as a lexical retrieval baseline.
+
+The retrieval approaches were compared as follows:
+
+| Configuration | Semantic Retrieval | BM25 | Combination     |
+| ------------- | -----------------: | ---: | --------------- |
+| C3 baseline   |               100% |   0% | Semantic only   |
+| BM25          |                 0% | 100% | Lexical only    |
+| H1            |                70% |  30% | Weighted hybrid |
+| H2            |                50% |  50% | Weighted hybrid |
+
+For H1 and H2, the top 10 candidates from semantic retrieval and BM25 were combined using normalized scores, and the top 3 documents were returned.
+
+### BM25 Standalone
+
+BM25 provided strong lexical retrieval for several questions, particularly when the terminology in the question closely matched the terminology in the papers.
+
+However, BM25 also produced noisy results for some questions. The clearest failure was Q10, where the retrieved passages came from the GPT-3 and Chain-of-Thought papers instead of the RAG paper containing the relevant discussion of RAG limitations.
+
+Therefore, BM25 was useful as a complementary retrieval method but was not suitable as a replacement for semantic retrieval.
+
+### H1 — 70/30 Hybrid
+
+H1 gave semantic retrieval more influence while allowing BM25 to contribute lexical matching.
+
+Compared with BM25 standalone, H1 substantially reduced the retrieval failures caused by relying only on lexical matching. It also benefited from BM25's lexical signal on questions such as Q5.
+
+However, H1 did not consistently improve retrieval quality compared with the C3 semantic baseline. C3 remained more focused for several questions, including Q2, Q3, Q4, and Q10.
+
+### H2 — 50/50 Hybrid
+
+H2 gave semantic retrieval and BM25 equal influence.
+
+It performed well across most questions and retained the complementary lexical behavior of BM25. However, giving BM25 equal weight also introduced some less relevant passages, and C3 remained more focused on several questions.
+
+H2 therefore did not provide a consistent improvement over C3.
+
+### Result
+
+The experiments showed three distinct behaviors:
+
+* **C3** provided the most consistent semantic retrieval quality.
+* **BM25** provided useful complementary lexical retrieval but could be noisy when used alone.
+* **H1 and H2** combined the strengths of both approaches in some cases, but neither consistently outperformed C3 across the fixed set of 10 evaluation questions.
+
+Therefore:
+
+* **C3 — Selected as the current retrieval baseline**
+* **BM25 — Not selected as standalone retrieval**
+* **H1 (70/30) — Not selected**
+* **H2 (50/50) — Not selected**
+
+These results do not rule out hybrid retrieval. Instead, they suggest that **fixed weighted score combination may not be the most effective way to combine semantic and lexical retrieval**.
+
+The next experiment will evaluate **Reciprocal Rank Fusion (RRF)**, which combines the rankings from semantic and lexical retrieval without requiring their scores to be placed on the same numerical scale.
+
