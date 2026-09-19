@@ -279,9 +279,9 @@ However, the experiment demonstrated that BM25 can provide a complementary lexic
 
 The BM25 implementation and evaluation results are retained for reproducibility.
 
-## V2 Stage 3 — Hybrid Search
+## V2 Stage 4 — Hybrid Search
 
-The third V2 experiment evaluated whether combining semantic retrieval with lexical BM25 retrieval could improve retrieval quality.
+The fourth V2 experiment evaluated whether combining semantic retrieval with lexical BM25 retrieval could improve retrieval quality.
 
 The **C3 configuration (1500 chunk size / 200 overlap)** was used as the fixed semantic retrieval baseline. **BM25 standalone** was also considered as a lexical retrieval baseline.
 
@@ -337,5 +337,4 @@ Therefore:
 
 These results do not rule out hybrid retrieval. Instead, they suggest that **fixed weighted score combination may not be the most effective way to combine semantic and lexical retrieval**.
 
-The next experiment will evaluate **Reciprocal Rank Fusion (RRF)**, which combines the rankings from semantic and lexical retrieval without requiring their scores to be placed on the same numerical scale.
 
