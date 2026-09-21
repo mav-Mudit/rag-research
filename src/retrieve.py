@@ -258,6 +258,65 @@ def retrieve_documents_hybrid(query, k=3):
         for document_id, score in ranked_documents[:k]
     ]
 
+def retrieve_documents_rrf(query, k=3):
+    vector_store = load_vector_store()
+
+    # Semantic retrieval
+    semantic_results = vector_store.similarity_search(
+        query,
+        k=10,
+    )
+
+    # BM25 retrieval
+    bm25, chunks = load_bm25()
+    tokenized_query = query.lower().split()
+    bm25_scores = bm25.get_scores(tokenized_query)
+
+    ranked_indices = sorted(
+        range(len(bm25_scores)),
+        key=lambda index: bm25_scores[index],
+        reverse=True,
+    )
+
+    bm25_indices = ranked_indices[:10]
+
+    # Calculate RRF scores
+    rrf_scores = {}
+    documents = {}
+
+    for rank, document in enumerate(semantic_results, start=1):
+        document_id = document_key(document)
+
+        rrf_scores[document_id] = (
+            rrf_scores.get(document_id, 0)
+            + 1 / (60 + rank)
+        )
+
+        documents[document_id] = document
+
+    for rank, index in enumerate(bm25_indices, start=1):
+        document = chunks[index]
+        document_id = document_key(document)
+
+        rrf_scores[document_id] = (
+            rrf_scores.get(document_id, 0)
+            + 1 / (60 + rank)
+        )
+
+        documents[document_id] = document
+
+    # Rank documents by combined RRF score
+    ranked_documents = sorted(
+        rrf_scores.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+
+    return [
+        documents[document_id]
+        for document_id, score in ranked_documents[:k]
+    ]
+
 if __name__ == "__main__":
     query = "What are the limitations of Retrieval-Augmented Generation?"
 
