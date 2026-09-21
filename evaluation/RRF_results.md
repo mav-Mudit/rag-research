@@ -1,6 +1,4 @@
-# V1 Baseline Evaluation Results
-
-These results were generated using the fixed V1 configuration and evaluation questions.
+# RRF Evaluation Results
 
 ## Question 1
 
