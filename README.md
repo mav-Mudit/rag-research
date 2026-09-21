@@ -337,4 +337,50 @@ Therefore:
 
 These results do not rule out hybrid retrieval. Instead, they suggest that **fixed weighted score combination may not be the most effective way to combine semantic and lexical retrieval**.
 
+## V2 Stage 5 — Reciprocal Rank Fusion (RRF)
+
+The fifth V2 experiment evaluated **Reciprocal Rank Fusion (RRF)** as an alternative way to combine semantic and lexical retrieval.
+
+### RRF Approach
+
+RRF combines the rankings produced by different retrieval methods rather than directly combining their original scores.
+
+For this experiment:
+
+* Semantic retrieval returned the top 10 candidates.
+* BM25 returned the top 10 candidates.
+* Each document received an RRF score based on its rank.
+* Scores were added for documents appearing in both rankings.
+* The top 3 documents by combined RRF score were returned.
+
+The standard RRF constant of 60 was used:
+
+```text
+RRF score = 1 / (60 + rank)
+```
+
+Unlike H1 and H2, RRF does not require the semantic and BM25 scores to be normalized or manually weighted.
+
+### Comparison with BM25 and Hybrid Search
+
+RRF was more robust than **BM25 standalone**.
+
+BM25 performed well on many questions where lexical matching was useful, but it also produced significant retrieval failures. The clearest example was Q10, where BM25 retrieved passages from the GPT-3 and Chain-of-Thought papers instead of the RAG paper containing the relevant discussion of RAG limitations.
+
+RRF reduced this problem by combining BM25 with semantic retrieval. For Q10, RRF retrieved the relevant RAG passage, although two less-relevant passages were still present.
+
+Compared with the **weighted hybrid approaches**, RRF produced similar overall behavior.
+
+* **H1 (70/30)** preserved stronger influence from semantic retrieval while allowing BM25 to contribute lexical matching.
+* **H2 (50/50)** gave both retrieval methods equal influence.
+* **RRF** combined their rankings without relying on the original retrieval scores or manually selected weights.
+
+RRF performed well across many questions, but it did not consistently produce more focused retrieval than C3. Some questions still contained less-relevant passages, particularly Q3, Q5, and Q10.
+
+### Result
+
+RRF successfully combined semantic and lexical retrieval and was more robust than BM25 standalone. However, it did **not provide a consistent improvement over the C3 semantic baseline or the previous hybrid approaches**.
+
+The standard RRF constant of 60 was used. Alternative constants were not evaluated because the basic RRF approach did not demonstrate a consistent advantage that justified further parameter tuning.
+
 
