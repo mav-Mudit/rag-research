@@ -3,6 +3,7 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from rank_bm25 import BM25Okapi
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 from src.chunk import split_documents
 from src.ingest import load_all_papers
 
@@ -41,12 +42,56 @@ def load_vector_store():
 
     return vector_store
 
+
+
+query_rewriter = ChatOpenAI(
+    model="gpt-5-mini",
+    temperature=0,
+)
+
+
+def transform_query(query):
+    prompt = ChatPromptTemplate.from_template(
+        """
+Rewrite the following question to make it more effective for
+semantic retrieval from research papers.
+
+Preserve the original meaning and intent.
+Do not answer the question.
+Do not add information that is not present in the original question.
+Return only the rewritten question.
+
+Original question:
+{query}
+
+Rewritten question:
+"""
+    )
+
+    chain = prompt | query_rewriter
+
+    response = chain.invoke({"query": query})
+
+    return response.content.strip()
+
 # C3
 def retrieve_documents(query, k=3):
     vector_store = load_vector_store()
 
     documents = vector_store.similarity_search(
         query,
+        k=k,
+    )
+
+    return documents
+
+def retrieve_documents_query_transform(query, k=3):
+    transformed_query = transform_query(query)
+
+    vector_store = load_vector_store()
+
+    documents = vector_store.similarity_search(
+        transformed_query,
         k=k,
     )
 

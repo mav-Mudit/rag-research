@@ -430,4 +430,42 @@ The reranking implementation is retained for experimental comparison, but it is 
 
 This experiment also reinforced an important limitation of reranking: a reranker can only reorder the candidates provided by the initial retriever. It cannot recover a relevant passage that was not retrieved into the candidate set.
 
+## V2 Stage 7 — Query Transformation
+
+The seventh and final V2 retrieval experiment evaluated whether rewriting a user query could improve semantic retrieval.
+
+The **C3 configuration (1500 chunk size / 200 overlap)** was used as the fixed retrieval baseline.
+
+For each evaluation question, an LLM-based query transformation step rewrote the original question once before retrieval:
+
+```text
+Original Query
+      ↓
+GPT-5-mini Query Transformation
+      ↓
+C3 Semantic Retrieval
+      ↓
+Top 3 Passages
+```
+
+The transformation prompt instructed the model to preserve the original meaning and intent, avoid adding information, and return only a rewritten question.
+
+The experiment used the same fixed set of 10 evaluation questions used throughout the V2 experiments.
+
+### Result
+
+Query transformation improved retrieval focus for several questions.
+
+For example, Q3, Q4, and Q5 retrieved more focused passages after transformation. For several other questions, the retrieved passages were similar to those produced by C3.
+
+However, the improvement was not consistent across the full evaluation set. Some queries produced similar or less focused results compared with C3. Therefore, the experiment did not provide sufficient evidence to declare query transformation superior to the C3 baseline.
+
+**Result:**
+
+* **C3 semantic retrieval — Remains the baseline**
+* **Query transformation — Not selected as a replacement**
+
+The query transformation implementation is retained for experimental comparison.
+
+With the retrieval experiments completed, the next step is **quantitative evaluation** to measure the retrieval behavior of the different configurations more systematically.
 
