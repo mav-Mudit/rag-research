@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from rank_bm25 import BM25Okapi
-
+from langchain_openai import ChatOpenAI
 from src.chunk import split_documents
 from src.ingest import load_all_papers
 
@@ -315,6 +315,85 @@ def retrieve_documents_rrf(query, k=3):
     return [
         documents[document_id]
         for document_id, score in ranked_documents[:k]
+    ]
+
+def rerank_documents(query, k=3, candidate_k=10):
+    vector_store = load_vector_store()
+
+    # Retrieve candidate documents using C3 semantic retrieval
+    candidates = vector_store.similarity_search(
+        query,
+        k=candidate_k,
+    )
+
+    if len(candidates) <= k:
+        return candidates
+
+    # Prepare candidates for the LLM
+    candidate_text = []
+
+    for i, document in enumerate(candidates, start=1):
+        paper_title = document.metadata.get("paper_title", "Unknown paper")
+        page = document.metadata.get("page", "Unknown page")
+
+        candidate_text.append(
+            f"Candidate {i}\n"
+            f"Paper: {paper_title}\n"
+            f"Page: {page}\n"
+            f"Passage:\n{document.page_content}"
+        )
+
+    candidate_text = "\n\n".join(candidate_text)
+
+    prompt = f"""
+You are a document relevance ranker.
+
+Given a question and a set of candidate passages, rank the passages
+by how useful they are for answering the question.
+
+Question:
+{query}
+
+Candidates:
+{candidate_text}
+
+Return ONLY the candidate numbers in order from most relevant
+to least relevant.
+
+Example:
+3, 1, 5, 2, 4
+"""
+
+    llm = ChatOpenAI(
+        model="gpt-5-mini",
+        temperature=0,
+    )
+
+    response = llm.invoke(prompt)
+
+    ranking_text = response.content.strip()
+
+    # Parse candidate numbers
+    ranked_indices = []
+
+    for number in ranking_text.split(","):
+        number = number.strip()
+
+        if number.isdigit():
+            index = int(number) - 1
+
+            if 0 <= index < len(candidates):
+                if index not in ranked_indices:
+                    ranked_indices.append(index)
+
+    # Add any candidates the model did not mention
+    for index in range(len(candidates)):
+        if index not in ranked_indices:
+            ranked_indices.append(index)
+
+    return [
+        candidates[index]
+        for index in ranked_indices[:k]
     ]
 
 if __name__ == "__main__":

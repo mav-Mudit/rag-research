@@ -383,4 +383,51 @@ RRF successfully combined semantic and lexical retrieval and was more robust tha
 
 The standard RRF constant of 60 was used. Alternative constants were not evaluated because the basic RRF approach did not demonstrate a consistent advantage that justified further parameter tuning.
 
+## V2 Stage 6 — Reranking
+
+The sixth V2 experiment evaluated whether reranking could improve the relevance of the final retrieved passages.
+
+The **C3 configuration (1500 chunk size / 200 overlap)** was used as the retrieval baseline. The approach used a two-stage retrieval pipeline:
+
+1. C3 semantic retrieval selected the top 10 candidate passages.
+2. An LLM-based reranker using `gpt-5-mini` ranked these candidates by how useful they were for answering the query.
+3. The top 3 reranked passages were returned to the generation step.
+
+### Retrieval Pipeline
+
+```text
+Query
+  ↓
+C3 Semantic Retrieval
+  ↓
+Top 10 Candidates
+  ↓
+LLM Reranker (gpt-5-mini)
+  ↓
+Top 3 Passages
+  ↓
+Answer Generation
+```
+
+The reranker was evaluated using the same fixed set of 10 questions used throughout the V2 experiments.
+
+### Result
+
+The reranker improved passage focus for several questions.
+
+For example, Q3 and Q4 received more focused passages directly addressing the questions, while Q5 also benefited from consistently retrieving passages from the GPT-3 paper.
+
+However, the improvement was not consistent across the full evaluation set. Q10 remained a clear example where the reranker selected one highly relevant RAG passage but also returned two unrelated passages from the GPT-3 and Chain-of-Thought papers. The C3 baseline retrieved three relevant RAG passages for this question.
+
+Therefore, the LLM reranker did not provide a consistent improvement over the C3 semantic retrieval baseline.
+
+**Result:**
+
+* **C3 semantic retrieval — Selected**
+* **LLM reranking — Not selected**
+
+The reranking implementation is retained for experimental comparison, but it is not part of the final V2 retrieval pipeline.
+
+This experiment also reinforced an important limitation of reranking: a reranker can only reorder the candidates provided by the initial retriever. It cannot recover a relevant passage that was not retrieved into the candidate set.
+
 
