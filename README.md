@@ -393,7 +393,7 @@ Some passages appeared in multiple configurations. After removing duplicate **qu
 
 ### LLM-as-a-Judge
 
-Each unique passage was evaluated by **GPT-5-mini** for its usefulness in answering the corresponding question.
+Each unique passage was evaluated by **gpt-5.6** for its usefulness in answering the corresponding question.
 
 The judge received the question and retrieved passage and assigned a binary relevance label:
 
