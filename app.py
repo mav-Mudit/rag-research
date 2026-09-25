@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.generate import rag_chain
-from src.retrieve import retrieve_documents
+from src.retrieve import rerank_documents
 
 
 st.set_page_config(
@@ -23,7 +23,7 @@ if st.button("Ask"):
     else:
         with st.spinner("Searching the papers and generating an answer..."):
             answer = rag_chain.invoke(query)
-            documents = retrieve_documents(query, k=3)
+            documents = rerank_documents(query, k=3)
 
         st.subheader("Answer")
         st.write(answer)

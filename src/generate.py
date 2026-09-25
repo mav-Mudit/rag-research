@@ -3,7 +3,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_openai import ChatOpenAI
-from src.retrieve import retrieve_documents
+from src.retrieve import rerank_documents
 
 load_dotenv()
 
@@ -57,7 +57,7 @@ def format_documents(documents):
 
 
 def retrieve_with_documents(query):
-    return retrieve_documents(query, k=3)
+    return rerank_documents(query, k=3)
 
 
 rag_chain = (

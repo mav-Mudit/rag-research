@@ -444,7 +444,7 @@ Example:
 if __name__ == "__main__":
     query = "What are the limitations of Retrieval-Augmented Generation?"
 
-    documents = retrieve_documents_bm25(query, k=3)
+    documents = rerank_documents(query, k=3)
 
     for i, document in enumerate(documents, start=1):
         print(f"\n{'=' * 60}")
