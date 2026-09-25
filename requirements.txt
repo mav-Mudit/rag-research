@@ -7,3 +7,4 @@ streamlit
 langchain-openai 
 python-dotenv
 rank-bm25
+langsmith
